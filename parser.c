@@ -1,14 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdbool.h>
-#include "intersection.c"
+#include "parser.h"
 
-typedef struct omem {
-  Object *itemArray;
-  size_t itemNum;
-} omem;
 
 int line = 1;
 
@@ -110,7 +101,7 @@ double* next_vector(FILE* json) {
 
 struct omem read_scene(FILE* json) {
   int c;
-  omem item;
+  struct omem item;
   item.itemArray = NULL;
   item.itemNum = 0;
 

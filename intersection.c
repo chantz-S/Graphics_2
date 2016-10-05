@@ -1,52 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+
+#include "intersection.h"
+
 
 // Plymorphism in C
 
-/*typedef struct {
-  double start[3];
-  double direction[3];
-} ray;*/
-
-typedef struct {
-  int kind;
-  double color[3];
-  union {
-    struct {
-      double width;
-      double height;
-    } camera;
-    struct {
-      double location[3];
-      double radius;
-    } sphere;
-    struct {
-      double location[3];
-      double normal[3];
-    }
-    plane;
-  };
-} Object;
-
-typedef struct Image {
-  double width;
-  double height;
-  char* color;
-}Image;
-
-typedef struct obj_array{
-  Object arr1[];
-  int onum;
-} obj_array;
 
 
-static inline double sqr(double v) {
+double sqr(double v) {
   return v*v;
 }
 
-
-static inline void normalize(double* v) {
+void normalize(double* v) {
   double len = sqrt(sqr(v[0]) + sqr(v[1]) + sqr(v[2]));
   v[0] /= len;
   v[1] /= len;
@@ -60,6 +24,25 @@ void pix_coloring(double *color, int row, int col,Image *image) {
     image->color[(int)(row * image->width*4 + col*4+1)] = (char)color[1];
     image->color[(int)(row * image->width*4 + col*4+2)]= (char)color[2];
 
+}
+
+void p6Create(Image *img, FILE* input, int ppm) {
+
+  size_t num;
+  int size = img->width*img->height*4;
+  printf("magic: %d\n", ppm);
+  if (ppm == 6) {
+    printf("inside\n");
+    fprintf(input, "P%d\n%lf %lf\n%d\n", ppm, img->width, img->height, 255);
+    for (int i=0; i<size; i++) {
+      printf("inside for\n");
+      char c = img->color[i];
+      if (i%4 != 0) {
+        fwrite(&c, 1, 1, input);
+      }
+    }
+  }
+  fclose(input);
 }
 
 double plane_intersection(double* Ro, double* Rd, double* location, double* normal) {
@@ -86,7 +69,7 @@ double plane_intersection(double* Ro, double* Rd, double* location, double* norm
   return scl;
 }
 
-double cylinder_intersection(double* Ro, double* Rd,
+double sphere_intersection(double* Ro, double* Rd,
 			     double* C, double r) {
   // Step 1. Find the equation for the object you are
   // interested in..  (e.g., cylinder)
