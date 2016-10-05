@@ -152,6 +152,12 @@ struct omem read_scene(FILE* filename) {
 
       char* value = next_string(json);
 
+    object.objNumber += 1;  //need to increment object counter
+    object.objArray = realloc(object.objArray, sizeof(Object)*object.objNumber); // allocate for new obj
+    object.objArray[object.objNumber-1].type = value; //set type
+
+
+
       if (strcmp(value, "camera") == 0) {
       } else if (strcmp(value, "sphere") == 0) {
       } else if (strcmp(value, "plane") == 0) {
@@ -179,6 +185,18 @@ struct omem read_scene(FILE* filename) {
 	      (strcmp(key, "height") == 0) ||
 	      (strcmp(key, "radius") == 0)) {
 	    double value = next_number(json);
+      if(value <=0){
+      fprintf(stderr, "ERROR: radius, height, or width is not correct num\n");
+      return 1;}
+      else{
+        // Put width, height, and radius vars in struct object
+          if ((strcmp(key, "width") == 0)) { object.objArray[object.objNumber-1].camera.width = value; }
+          // store the height in the struct
+          else if ((strcmp(key, "height") == 0)) { object.objArray[object.objNumber-1].camera.height = value; }
+          // store the radius in the struct
+          else if ((strcmp(key, "radius") == 0)) { object.objArray[object.objNumber-1].sphere.radius = value; }
+      }
+
 	  } else if ((strcmp(key, "color") == 0) ||
 		     (strcmp(key, "position") == 0) ||
 		     (strcmp(key, "normal") == 0)) {
