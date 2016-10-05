@@ -5,7 +5,6 @@
 // Plymorphism in C
 
 
-
 double sqr(double v) {
   return v*v;
 }
@@ -52,7 +51,7 @@ double plane_intersection(double* Ro, double* Rd, double* location, double* norm
     return 1;
   }
 
-  double newloc[3]; //double array
+  double newloc[3];
 
   for (int i=0; i<=2;i++){
 	  newloc[i] = location[i]-Ro[i];
