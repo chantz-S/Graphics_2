@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdbool.h>
 #include "intersection.c"
 
 typedef struct omem {
-  Object *objArray;
-  size_t objNumber;
+  Object *itemArray;
+  size_t itemNum;
 } omem;
 
 int line = 1;
@@ -106,11 +108,11 @@ double* next_vector(FILE* json) {
 }
 
 
-struct omem read_scene(FILE* filename) {
+struct omem read_scene(FILE* json) {
   int c;
-  omem object;
-  object.objArray = NULL;
-  object.objNumber = 0;
+  omem item;
+  item.itemArray = NULL;
+  item.itemNum = 0;
 
 //error chk in main
   /*if (json == NULL) {
@@ -132,7 +134,7 @@ struct omem read_scene(FILE* filename) {
     if (c == ']') {
       fprintf(stderr, "Error: This is the worst scene file EVER.\n");
       fclose(json);
-      return object;
+      return item;
     }
     if (c == '{') {
       skip_ws(json);
@@ -152,9 +154,9 @@ struct omem read_scene(FILE* filename) {
 
       char* value = next_string(json);
 
-    object.objNumber += 1;  //need to increment object counter
-    object.objArray = realloc(object.objArray, sizeof(Object)*object.objNumber); // allocate for new obj
-    object.objArray[object.objNumber-1].type = value; //set type
+    item.itemNum += 1;  //need to increment object counter
+    item.itemArray = realloc(item.itemArray, sizeof(item)*item.itemNum); // allocate for new obj
+    item.itemArray[item.itemNum-1].type = value; //set type
 
 
 
@@ -187,24 +189,47 @@ struct omem read_scene(FILE* filename) {
 	    double value = next_number(json);
       if(value <=0){
       fprintf(stderr, "ERROR: radius, height, or width is not correct num\n");
-      return 1;}
+      exit(1);}
       else{
         // Put width, height, and radius vars in struct object
-          if ((strcmp(key, "width") == 0)) { object.objArray[object.objNumber-1].camera.width = value; }
-          // store the height in the struct
-          else if ((strcmp(key, "height") == 0)) { object.objArray[object.objNumber-1].camera.height = value; }
-          // store the radius in the struct
-          else if ((strcmp(key, "radius") == 0)) { object.objArray[object.objNumber-1].sphere.radius = value; }
+          if ((strcmp(key, "width") == 0))
+          { item.itemArray[item.itemNum-1].camera.width = value; }
+          else if ((strcmp(key, "height") == 0))
+          { item.itemArray[item.itemNum-1].camera.height = value; }
+          else if ((strcmp(key, "radius") == 0))
+          { item.itemArray[item.itemNum-1].sphere.radius = value; } //sphere has radius cam doesnt
       }
 
 	  } else if ((strcmp(key, "color") == 0) ||
 		     (strcmp(key, "position") == 0) ||
 		     (strcmp(key, "normal") == 0)) {
 	    double* value = next_vector(json);
+      if ((strcmp(key, "color") == 0)) {
+           item.itemArray[item.itemNum-1].color[0] = value[0];
+           item.itemArray[item.itemNum-1].color[1] = value[1];
+           item.itemArray[item.itemNum-1].color[2] = value[2];
+           printf("Here is the color: %lf, %lf, %lf\n", item.itemArray[item.itemNum-1].color[0],
+                                                        item.itemArray[item.itemNum-1].color[1],
+                                                        item.itemArray[item.itemNum-1].color[2]);
+         } else if ((strcmp(key, "position") == 0)) {
+           item.itemArray[item.itemNum-1].sphere.location[0] = value[0];
+           item.itemArray[item.itemNum-1].sphere.location[1] = value[1];
+           item.itemArray[item.itemNum-1].sphere.location[2] = value[2];
+           printf("Here is the position: %lf, %lf, %lf\n", item.itemArray[item.itemNum-1].sphere.location[0],
+                                                           item.itemArray[item.itemNum-1].sphere.location[0],
+                                                           item.itemArray[item.itemNum-1].sphere.location[2]);
+         } else if ((strcmp(key, "normal") == 0)) {
+           item.itemArray[item.itemNum-1].plane.normal[0] = value[0];
+           item.itemArray[item.itemNum-1].plane.normal[1] = value[1];
+           item.itemArray[item.itemNum-1].plane.normal[2] = value[2];
+           printf("Here is the normal: %lf, %lf, %lf\n", item.itemArray[item.itemNum-1].plane.normal[0],
+                                                         item.itemArray[item.itemNum-1].plane.normal[1],
+                                                         item.itemArray[item.itemNum-1].plane.normal[2]);
+         }
 	  } else {
-	    fprintf(stderr, "Error: Unknown property, \"%s\", on line %d.\n",
-		    key, line);
+	    fprintf(stderr, "Error: Unknown property, \"%s\", on line %d.\n",key, line);
 	    //char* value = next_string(json);
+      exit(1);
 	  }
 	  skip_ws(json);
 	} else {
@@ -219,16 +244,11 @@ struct omem read_scene(FILE* filename) {
 	skip_ws(json);
       } else if (c == ']') {
 	fclose(json);
-	return;
+	return item;
       } else {
 	fprintf(stderr, "Error: Expecting ',' or ']' on line %d.\n", line);
 	exit(1);
       }
     }
   }
-}
-
-int main(int c, char** argv) {
-  read_scene(argv[1]);
-  return 0;
 }
