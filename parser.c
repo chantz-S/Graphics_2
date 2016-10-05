@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "intersection.c"
+
+typedef struct omem {
+  Object *objArray;
+  size_t objNumber;
+} omem;
 
 int line = 1;
 
@@ -76,7 +82,7 @@ char* next_string(FILE* json) {
 
 double next_number(FILE* json) {
   double value;
-  fscanf(json, "%f", &value);
+  fscanf(json, "%lf", &value);
   // Error check this..
   return value;
 }
@@ -100,14 +106,17 @@ double* next_vector(FILE* json) {
 }
 
 
-void read_scene(char* filename) {
+struct omem read_scene(FILE* filename) {
   int c;
-  FILE* json = fopen(filename, "r");
+  omem object;
+  object.objArray = NULL;
+  object.objNumber = 0;
 
-  if (json == NULL) {
+//error chk in main
+  /*if (json == NULL) {
     fprintf(stderr, "Error: Could not open file \"%s\"\n", filename);
     exit(1);
-  }
+  }*/
 
   skip_ws(json);
 
@@ -123,7 +132,7 @@ void read_scene(char* filename) {
     if (c == ']') {
       fprintf(stderr, "Error: This is the worst scene file EVER.\n");
       fclose(json);
-      return;
+      return object;
     }
     if (c == '{') {
       skip_ws(json);
@@ -131,7 +140,7 @@ void read_scene(char* filename) {
       // Parse the object
       char* key = next_string(json);
       if (strcmp(key, "type") != 0) {
-	fprintf(stderr, "Error: Expected \"type\" key on line number %d.\n", line);
+	       fprintf(stderr, "Error: Expected \"type\" key on line number %d.\n", line);
 	exit(1);
       }
 
