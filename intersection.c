@@ -4,23 +4,41 @@
 
 // Plymorphism in C
 
+/*typedef struct {
+  double start[3];
+  double direction[3];
+} ray;*/
+
 typedef struct {
-  int kind; // 0 = cylinder, 1 = sphere, 2 = teapot
+  int kind;
   double color[3];
   union {
     struct {
-      double center[3];
-      double radius;
-    } cylinder;
+      double width;
+      double height;
+    } camera;
     struct {
-      double center[3];
+      double location[3];
       double radius;
     } sphere;
     struct {
-      double handle_length;
-    } teapot;
+      double location[3];
+      double normal[3];
+    }
+    plane;
   };
 } Object;
+
+typedef struct Image {
+  double width;
+  double height;
+  char* color;
+}Image;
+
+typedef struct obj_array{
+  Object arr1[];
+  int onum;
+} obj_array;
 
 
 static inline double sqr(double v) {
@@ -35,6 +53,38 @@ static inline void normalize(double* v) {
   v[2] /= len;
 }
 
+void pix_coloring(double *color, int row, int col,Image *image) {
+
+    image->color[(int)(row * image->width*4 + col*4+3)]= 255;
+    image->color[(int)(row * image->width*4 + col*4)] = (char)color[0];
+    image->color[(int)(row * image->width*4 + col*4+1)] = (char)color[1];
+    image->color[(int)(row * image->width*4 + col*4+2)]= (char)color[2];
+
+}
+
+double plane_intersection(double* Ro, double* Rd, double* location, double* normal) {
+  double x = (normal[0]* Rd[0])+(normal[1]* Rd[1])+(normal[2]* Rd[2]); // intersection formula for planes
+
+  if(fabs(x) < .0001) { // get the absolute value
+    return 1;
+  }
+
+  double newloc[3]; //double array
+
+  for (int i=0; i<=2;i++){
+	  newloc[i] = location[i]-Ro[i];
+  }
+
+  double dis = (newloc[0]* normal[0])+(newloc[1]* normal[1])+(newloc[2]* normal[2]) ;
+
+  double scl = dis/x; //get scale
+
+  if (scl < 0) {
+    return 1;
+  }
+
+  return scl;
+}
 
 double cylinder_intersection(double* Ro, double* Rd,
 			     double* C, double r) {
@@ -78,9 +128,9 @@ double cylinder_intersection(double* Ro, double* Rd,
   // Rox^2 - 2*Rox*Cx + Cx^2 + Roz^2 - 2*Roz*Cz + Cz^2 - r^2 = 0
   //
   // Use the quadratic equation to solve for t..
-  double a = (sqr(Rd[0]) + sqr(Rd[2]));
-  double b = (2 * (Ro[0] * Rd[0] - Rd[0] * C[0] + Ro[2] * Rd[2] - Rd[2] * C[2]));
-  double c = sqr(Ro[0]) - 2*Ro[0]*C[0] + sqr(C[0]) + sqr(Ro[2]) - 2*Ro[2]*C[2] + sqr(C[2]) - sqr(r);
+  double a = (sqr(Rd[0]) + sqr(Rd[1]) + sqr(Rd[2]));
+  double b = 2 * (Rd[0]*(Ro[0]-C[0]) + Rd[1]*(Ro[1]-C[1]) + Rd[2]*(Ro[2]-C[2]));
+  double c = sqr(Ro[0]-C[0]) + sqr(Ro[1]-C[1]) + sqr(Ro[2]-C[2]) - sqr(r);
 
   double det = sqr(b) - 4 * a * c;
   if (det < 0) return -1;
@@ -95,20 +145,20 @@ double cylinder_intersection(double* Ro, double* Rd,
 
   return -1;
 }
-
+/*
 int main() {
 
   Object** objects;
   objects = malloc(sizeof(Object*)*2);
   objects[0] = malloc(sizeof(Object));
   objects[0]->kind = 0;
-  objects[0]->cylinder.radius = 2;
+  objects[0]->sphere.radius = 2;
   // object[0]->teapot.handle_length = 2;
-  objects[0]->cylinder.center[0] = 0;
-  objects[0]->cylinder.center[1] = 0;
-  objects[0]->cylinder.center[2] = 20;
+  objects[0]->plane.location[0] = 0;
+  objects[0]->plane.location[1] = 0;
+  objects[0]->plane.location[2] = 20;
   objects[1] = NULL;
-  
+
   double cx = 0;
   double cy = 0;
   double h = 0.7;
@@ -136,9 +186,9 @@ int main() {
 
 	switch(objects[i]->kind) {
 	case 0:
-	  t = cylinder_intersection(Ro, Rd,
-				    objects[i]->cylinder.center,
-				    objects[i]->cylinder.radius);
+	  t = plane_intersection(Ro, Rd,
+				    objects[i]->plane.location,
+				    objects[i]->plane.normal);
 	  break;
 	default:
 	  // Horrible error
@@ -157,4 +207,4 @@ int main() {
   }
 
   return 0;
-}
+}*/
